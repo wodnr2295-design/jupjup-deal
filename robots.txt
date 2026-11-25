@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://wodnr2295-design.github.io/jupjup-deal/sitemap.xml
