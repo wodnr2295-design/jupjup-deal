@@ -73,35 +73,62 @@
     ].join("\n");
   }
 
-  /* ---------- 표 ---------- */
-  function tableHTML(cat, list) {
+  /* ---------- 표 (기본은 접힌 상태) ---------- */
+  function tableHTML(rows, list, label) {
     var head = list.map(function (p) { return "<th>" + esc(p.tableName || p.brand || p.name) + "</th>"; }).join("");
-    var body = (cat.rows || []).map(function (label) {
+    var body = (rows || []).map(function (label2) {
       var cells = list.map(function (p) {
-        var v = (p.compare || {})[label];
+        var v = (p.compare || {})[label2];
         return "<td>" + esc(v == null || v === "" ? "—" : v) + "</td>";
       }).join("");
-      return "<tr><th scope=\"row\">" + esc(label) + "</th>" + cells + "</tr>";
+      return "<tr><th scope=\"row\">" + esc(label2) + "</th>" + cells + "</tr>";
     }).join("");
     return [
-      '<div class="table-wrap">',
-      '  <div class="table-scroll">',
-      "    <table>",
-      '      <thead><tr><th scope="col">비교 항목</th>' + head + "</tr></thead>",
-      "      <tbody>" + body + "</tbody>",
-      "    </table>",
+      '<details class="spec">',
+      '  <summary><span class="spec__t">스펙 비교표</span>' +
+        '<span class="spec__n">' + esc(label || "") + " " + list.length + "종</span></summary>",
+      '  <div class="table-wrap">',
+      '    <div class="table-scroll">',
+      "      <table>",
+      '        <thead><tr><th scope="col">비교 항목</th>' + head + "</tr></thead>",
+      "        <tbody>" + body + "</tbody>",
+      "      </table>",
+      "    </div>",
+      '    <p class="table-hint">← 옆으로 밀면 전체 항목이 보입니다.</p>',
       "  </div>",
-      '  <p class="table-hint">← 옆으로 밀면 전체 항목이 보입니다.</p>',
-      "</div>"
+      "</details>"
     ].join("\n");
+  }
+
+  function gridHTML(list) {
+    return '<div class="grid">' + list.map(cardHTML).join("\n") + "</div>";
   }
 
   /* ---------- 섹션 ---------- */
   function sectionHTML(cat) {
-    var list = sortProducts(productsOf(cat.id));
-    if (!list.length) return "";
+    var all = productsOf(cat.id);
+    if (!all.length) return "";
     var checks = (cat.checks || []).map(function (c) { return "<li>" + esc(c) + "</li>"; }).join("");
-    var lastChecked = list.map(function (p) { return p.priceCheckedAt || ""; }).sort().pop();
+    var lastChecked = all.map(function (p) { return p.priceCheckedAt || ""; }).sort().pop();
+
+    var body;
+    if (cat.groups && cat.groups.length) {
+      body = cat.groups.map(function (g) {
+        var list = sortProducts(all.filter(function (p) { return p.group === g.id; }));
+        if (!list.length) return "";
+        return [
+          '<div class="group" id="' + esc(cat.id) + "-" + esc(g.id) + '">',
+          '  <h3 class="group__title">' + esc(g.label) + '<span class="group__count">' + list.length + "종</span></h3>",
+          gridHTML(list),
+          tableHTML(g.rows, list, g.label),
+          "</div>"
+        ].join("\n");
+      }).join("\n");
+    } else {
+      var list = sortProducts(all);
+      body = gridHTML(list) + tableHTML(cat.rows, list, cat.label);
+    }
+
     return [
       '<section class="cat" id="' + esc(cat.id) + '" data-cat="' + esc(cat.id) + '"' +
         (state.filter !== "all" && state.filter !== cat.id ? " hidden" : "") + ">",
@@ -114,8 +141,7 @@
       '      <ul class="checks">' + checks + "</ul>",
       "    </div>",
       "  </header>",
-      '  <div class="grid">' + list.map(cardHTML).join("\n") + "</div>",
-      tableHTML(cat, list),
+      body,
       '  <p class="note">' + esc(cat.note || "") + "</p>",
       "</section>"
     ].join("\n");
