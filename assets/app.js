@@ -154,8 +154,8 @@
     var html = '<button class="chip" type="button" data-filter="all" aria-pressed="true">전체' +
       '<span class="chip__count">' + total + "</span></button>";
     cats.forEach(function (c) {
-      html += '<button class="chip" type="button" data-filter="' + esc(c.id) + '" aria-pressed="false">' +
-        esc(c.label) + '<span class="chip__count">' + productsOf(c.id).length + "</span></button>";
+      html += '<button class="chip" type="button" data-filter="' + esc(c.id) + '" aria-pressed="false" title="' + esc(c.label) + '">' +
+        esc(c.short || c.label) + '<span class="chip__count">' + productsOf(c.id).length + "</span></button>";
     });
     $("#chips").innerHTML = html;
   }
